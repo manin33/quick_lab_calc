@@ -1,5 +1,11 @@
 # QuickLab Calc
 
+Live app: https://quicklabcalc.streamlit.app
+
+QuickLab Calc is a practical laboratory calculator for routine solution-preparation calculations.
+
+# QuickLab Calc
+
 QuickLab Calc is a practical laboratory calculator for routine analytical chemistry and solution-preparation calculations.
 
 Current version:
