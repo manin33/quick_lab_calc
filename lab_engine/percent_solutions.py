@@ -125,6 +125,9 @@ def volume_from_percent_vv(
     if percent <= 0:
         return "Error: percent must be greater than zero."
 
+    if percent > 100:
+        return "Error: percent v/v cannot be greater than 100."
+
     if final_volume <= 0:
         return "Error: final volume must be greater than zero."
 
@@ -228,6 +231,9 @@ def mass_from_percent_ww(
     # Values must be greater than zero.
     if percent <= 0:
         return "Error: percent must be greater than zero."
+
+    if percent > 100:
+        return "Error: percent w/w cannot be greater than 100."
 
     if final_mass <= 0:
         return "Error: final mixture mass must be greater than zero."

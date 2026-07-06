@@ -329,41 +329,46 @@ def run_scaling_calculator():
     print(instruction)
 
 
-while True:
-    show_menu()
+def main():
+    while True:
+        show_menu()
 
-    choice = get_choice(
-        "\nChoose an option: ",
-        ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10"]
-    )
+        choice = get_choice(
+            "\nChoose an option: ",
+            ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10"]
+        )
 
-    if choice == "1":
-        run_dilution_calculator()
+        if choice == "1":
+            run_dilution_calculator()
 
-    elif choice == "2":
-        run_solution_prep_calculator()
+        elif choice == "2":
+            run_solution_prep_calculator()
 
-    elif choice == "3":
-        run_molarity_from_mass_calculator()
+        elif choice == "3":
+            run_molarity_from_mass_calculator()
 
-    elif choice == "4":
-        run_percent_wv_calculator()
+        elif choice == "4":
+            run_percent_wv_calculator()
 
-    elif choice == "5":
-        run_percent_vv_calculator()
+        elif choice == "5":
+            run_percent_vv_calculator()
 
-    elif choice == "6":
-        run_percent_ww_calculator()
+        elif choice == "6":
+            run_percent_ww_calculator()
 
-    elif choice == "7":
-        run_concentration_conversion_calculator()
+        elif choice == "7":
+            run_concentration_conversion_calculator()
 
-    elif choice == "8":
-        run_serial_dilution_calculator()
+        elif choice == "8":
+            run_serial_dilution_calculator()
 
-    elif choice == "9":
-        run_scaling_calculator()
+        elif choice == "9":
+            run_scaling_calculator()
 
-    elif choice == "10":
-        print("Exiting QuickLab Calc.")
-        break
+        elif choice == "10":
+            print("Exiting QuickLab Calc.")
+            break
+
+
+if __name__ == "__main__":
+    main()
