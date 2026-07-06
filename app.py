@@ -266,7 +266,7 @@ st.write("A practical calculator for routine lab solution-preparation calculatio
 st.info(DISCLAIMER)
 
 calculator = st.sidebar.selectbox(
-    "Choose calculator",
+    "Choose a calculator",
     [
         "Dilution calculator",
         "Prepare solution from solid",
@@ -274,9 +274,10 @@ calculator = st.sidebar.selectbox(
         "Percent w/v solution",
         "Percent v/v solution",
         "Percent w/w mixture",
-        "Concentration conversion",
+        "Concentration unit conversion",
         "Serial dilution planner",
         "Solution scaling calculator",
+        "About / Privacy",
     ],
 )
 
@@ -298,6 +299,60 @@ elif calculator == "Serial dilution planner":
     serial_dilution_calculator()
 elif calculator == "Solution scaling calculator":
     scaling_calculator()
+elif calculator == "About / Privacy":
+    st.header("About QuickLab Calc")
+
+    st.write(
+        "QuickLab Calc is a practical laboratory calculator for routine "
+        "solution-preparation calculations, including dilutions, molarity, "
+        "percent solutions, concentration conversions, serial dilutions, "
+        "and scaling."
+    )
+
+    st.subheader("Important disclaimer")
+
+    st.warning(
+        "QuickLab Calc is a calculation aid for educational and laboratory "
+        "planning purposes. Always verify calculations according to your "
+        "laboratory SOP, method, supervisor requirements, and applicable "
+        "regulations."
+    )
+
+    st.subheader("Internet connection")
+
+    st.write(
+        "The web and Android versions of QuickLab Calc require an internet "
+        "connection because the app runs through the hosted web application."
+    )
+
+    st.subheader("Privacy")
+
+    st.write(
+        "QuickLab Calc does not ask users to create an account, does not ask "
+        "for names, emails, passwords, phone numbers, payment information, "
+        "location, contacts, photos, files, or health information."
+    )
+
+    st.write(
+        "The app only uses the numerical values entered into the calculator "
+        "fields to display calculation results. Do not enter confidential, "
+        "proprietary, regulated, or patient-related information."
+    )
+
+    st.write(
+        "Because the app is hosted online, basic technical information may be "
+        "processed by the hosting platform as part of normal web service "
+        "operation, such as IP address, browser information, device information, "
+        "and usage logs."
+    )
+
+    st.subheader("Contact")
+
+    st.write(
+        "For feedback, questions, or correction requests, contact the developer "
+        "through the GitHub repository or the contact email listed in the "
+        "privacy policy."
+    )
 
 with st.expander("Example calculations"):
     st.markdown(
