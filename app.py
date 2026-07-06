@@ -265,20 +265,23 @@ st.title("🧪 QuickLab Calc")
 st.write("A practical calculator for routine lab solution-preparation calculations.")
 st.info(DISCLAIMER)
 
-calculator = st.sidebar.selectbox(
-    "Choose a calculator",
-    [
-        "Dilution calculator",
-        "Prepare solution from solid",
-        "Molarity from weighed solid",
-        "Percent w/v solution",
-        "Percent v/v solution",
-        "Percent w/w mixture",
-        "Concentration unit conversion",
-        "Serial dilution planner",
-        "Solution scaling calculator",
-        "About / Privacy",
-    ],
+calculator_options = [
+    "Dilution calculator",
+    "Prepare solution from solid",
+    "Molarity from weighed solid",
+    "Percent w/v solution",
+    "Percent v/v solution",
+    "Percent w/w mixture",
+    "Concentration unit conversion",
+    "Serial dilution planner",
+    "Solution scaling calculator",
+    "About / Privacy",
+]
+
+calculator = st.radio(
+    "Choose calculator",
+    calculator_options,
+    index=0,
 )
 
 if calculator == "Dilution calculator":
