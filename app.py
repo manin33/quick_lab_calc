@@ -2,6 +2,14 @@
 
 import streamlit as st
 
+from lab_engine.analytical_standards import (
+    ANALYTICAL_CONCENTRATION_UNITS,
+    ANALYTICAL_MASS_UNITS,
+    ANALYTICAL_VOLUME_UNITS,
+    analytical_standard_from_solid_instruction,
+    dilute_analytical_standard_instruction,
+    practical_analytical_standard_plan_instruction,
+)
 from lab_engine.concentration import CONCENTRATION_UNITS, concentration_conversion_instruction
 from lab_engine.dilution import dilution_instruction_with_volume_units
 from lab_engine.percent_solutions import (
@@ -28,12 +36,25 @@ DISCLAIMER = (
     "and supervisor requirements."
 )
 
+PURITY_CAPTION = (
+    "Enter the effective purity/assay as a percent. If your certificate uses "
+    "multiple corrections such as water content, dried basis, as-is basis, "
+    "salt form, potency, or content in mg/mg, convert them according to your "
+    "method or SOP before entering the final effective percent here."
+)
+
 
 def show_result(instruction: str) -> None:
-    """Display an engine result as success or error text."""
+    """Display an engine result as success, warning, info, or error text."""
     if instruction.startswith("Error:"):
         st.error(instruction)
     elif instruction.startswith("Warning:"):
+        st.warning(instruction)
+    elif instruction.startswith("Final concentration cannot"):
+        st.error(instruction)
+    elif instruction.startswith("No dilution is needed"):
+        st.info(instruction)
+    elif "Pipetting warning:" in instruction:
         st.warning(instruction)
     else:
         st.success(instruction)
@@ -51,10 +72,18 @@ def dilution_calculator() -> None:
     with st.form("dilution_form"):
         c1 = positive_number("Stock concentration (C1)", 1000.0)
         c2 = positive_number("Final concentration (C2)", 50.0)
-        concentration_unit = st.selectbox("Concentration unit", DILUTION_CONCENTRATION_UNITS, index=5)
+        concentration_unit = st.selectbox(
+            "Concentration unit",
+            DILUTION_CONCENTRATION_UNITS,
+            index=5,
+        )
         v2 = positive_number("Final volume (V2)", 100.0)
         v2_unit = st.selectbox("Final volume unit", VOLUME_UNITS, index=2)
-        output_volume_unit = st.selectbox("Output stock volume unit", VOLUME_UNITS, index=2)
+        output_volume_unit = st.selectbox(
+            "Output stock volume unit",
+            VOLUME_UNITS,
+            index=2,
+        )
         submitted = st.form_submit_button("Calculate dilution")
 
     if submitted:
@@ -67,6 +96,232 @@ def dilution_calculator() -> None:
             concentration_unit=concentration_unit,
         )
         show_result(instruction)
+
+
+def analytical_standard_from_solid_calculator() -> None:
+    st.subheader("Prepare analytical standard from solid")
+    st.caption(
+        "Use this for HPLC-style standards prepared in mass/volume units "
+        "such as mg/mL, µg/mL, mg/L, µg/L, ppm, or ppb."
+    )
+
+    with st.form("analytical_standard_from_solid_form"):
+        compound_name = st.text_input("Compound name", "Umeclidinium")
+
+        concentration = positive_number("Target concentration", 2.5542)
+        concentration_unit = st.selectbox(
+            "Target concentration unit",
+            ANALYTICAL_CONCENTRATION_UNITS,
+            index=2,
+        )
+
+        final_volume = positive_number("Final volume", 200.0)
+        final_volume_unit = st.selectbox(
+            "Final volume unit",
+            ANALYTICAL_VOLUME_UNITS,
+            index=0,
+        )
+
+        purity_percent = st.number_input(
+            "Purity / assay (%)",
+            min_value=0.000000001,
+            max_value=100.0,
+            value=100.0,
+            format="%.10g",
+        )
+        st.caption(PURITY_CAPTION)
+
+        output_mass_unit = st.selectbox(
+            "Output mass unit",
+            ANALYTICAL_MASS_UNITS,
+            index=2,
+        )
+
+        submitted = st.form_submit_button("Calculate mass to weigh")
+
+    if submitted:
+        instruction = analytical_standard_from_solid_instruction(
+            compound_name=compound_name.strip() or "compound",
+            concentration=concentration,
+            concentration_unit=concentration_unit,
+            final_volume=final_volume,
+            final_volume_unit=final_volume_unit,
+            output_mass_unit=output_mass_unit,
+            purity_percent=purity_percent,
+        )
+        show_result(instruction)
+
+        if concentration_unit in {"ppm", "ppb"}:
+            st.info(
+                "Note: ppm/ppb conversions are approximate for dilute "
+                "aqueous-style laboratory calculations."
+            )
+
+
+def dilute_analytical_standard_calculator() -> None:
+    st.subheader("Dilute analytical standard")
+    st.caption(
+        "Use this to prepare a working standard from a stock analytical "
+        "standard. Stock and final concentration units may be different."
+    )
+
+    with st.form("dilute_analytical_standard_form"):
+        stock_concentration = positive_number("Stock concentration (C1)", 1.0)
+        stock_concentration_unit = st.selectbox(
+            "Stock concentration unit",
+            ANALYTICAL_CONCENTRATION_UNITS,
+            index=0,
+        )
+
+        final_concentration = positive_number("Final concentration (C2)", 50.0)
+        final_concentration_unit = st.selectbox(
+            "Final concentration unit",
+            ANALYTICAL_CONCENTRATION_UNITS,
+            index=2,
+        )
+
+        final_volume = positive_number("Final volume (V2)", 10.0)
+        final_volume_unit = st.selectbox(
+            "Final volume unit",
+            ANALYTICAL_VOLUME_UNITS,
+            index=0,
+        )
+
+        output_volume_unit = st.selectbox(
+            "Output stock volume unit",
+            ANALYTICAL_VOLUME_UNITS,
+            index=0,
+        )
+
+        submitted = st.form_submit_button("Calculate stock volume")
+
+    if submitted:
+        instruction = dilute_analytical_standard_instruction(
+            stock_concentration=stock_concentration,
+            stock_concentration_unit=stock_concentration_unit,
+            final_concentration=final_concentration,
+            final_concentration_unit=final_concentration_unit,
+            final_volume=final_volume,
+            final_volume_unit=final_volume_unit,
+            output_volume_unit=output_volume_unit,
+        )
+        show_result(instruction)
+
+        if (
+            stock_concentration_unit in {"ppm", "ppb"}
+            or final_concentration_unit in {"ppm", "ppb"}
+        ):
+            st.info(
+                "Note: ppm/ppb conversions are approximate for dilute "
+                "aqueous-style laboratory calculations."
+            )
+
+
+def practical_analytical_standard_plan_calculator() -> None:
+    st.subheader("Practical analytical standard plan")
+    st.caption(
+        "Use this when the direct required mass is too small to weigh "
+        "comfortably. The calculator suggests a stock preparation and a "
+        "working standard dilution."
+    )
+
+    with st.form("practical_analytical_standard_plan_form"):
+        compound_name = st.text_input("Compound name", "Umeclidinium")
+
+        st.markdown("### Working standard target")
+
+        target_concentration = positive_number("Target working concentration", 2.5542)
+        target_concentration_unit = st.selectbox(
+            "Target working concentration unit",
+            ANALYTICAL_CONCENTRATION_UNITS,
+            index=2,
+        )
+
+        working_final_volume = positive_number("Working standard final volume", 200.0)
+        working_final_volume_unit = st.selectbox(
+            "Working standard final volume unit",
+            ANALYTICAL_VOLUME_UNITS,
+            index=0,
+        )
+
+        st.markdown("### Practical stock preparation")
+
+        stock_pure_mass = positive_number("Target pure mass for stock", 10.0)
+        stock_pure_mass_unit = st.selectbox(
+            "Stock pure mass unit",
+            ANALYTICAL_MASS_UNITS,
+            index=2,
+        )
+
+        purity_percent = st.number_input(
+            "Purity / assay (%)",
+            min_value=0.000000001,
+            max_value=100.0,
+            value=98.0,
+            format="%.10g",
+        )
+        st.caption(PURITY_CAPTION)
+
+        stock_final_volume = positive_number("Stock final volume", 100.0)
+        stock_final_volume_unit = st.selectbox(
+            "Stock final volume unit",
+            ANALYTICAL_VOLUME_UNITS,
+            index=0,
+        )
+
+        st.markdown("### Practical checks")
+
+        minimum_pipetting_volume = positive_number(
+            "Minimum comfortable pipetting volume",
+            1.0,
+        )
+        minimum_pipetting_volume_unit = st.selectbox(
+            "Minimum pipetting volume unit",
+            ANALYTICAL_VOLUME_UNITS,
+            index=0,
+        )
+
+        output_stock_concentration_unit = st.selectbox(
+            "Output stock concentration unit",
+            ANALYTICAL_CONCENTRATION_UNITS,
+            index=2,
+        )
+
+        output_stock_volume_unit = st.selectbox(
+            "Output stock volume unit",
+            ANALYTICAL_VOLUME_UNITS,
+            index=0,
+        )
+
+        submitted = st.form_submit_button("Create practical standard plan")
+
+    if submitted:
+        instruction = practical_analytical_standard_plan_instruction(
+            compound_name=compound_name.strip() or "compound",
+            target_concentration=target_concentration,
+            target_concentration_unit=target_concentration_unit,
+            working_final_volume=working_final_volume,
+            working_final_volume_unit=working_final_volume_unit,
+            stock_pure_mass=stock_pure_mass,
+            stock_pure_mass_unit=stock_pure_mass_unit,
+            purity_percent=purity_percent,
+            stock_final_volume=stock_final_volume,
+            stock_final_volume_unit=stock_final_volume_unit,
+            minimum_pipetting_volume=minimum_pipetting_volume,
+            minimum_pipetting_volume_unit=minimum_pipetting_volume_unit,
+            output_stock_concentration_unit=output_stock_concentration_unit,
+            output_stock_volume_unit=output_stock_volume_unit,
+        )
+        show_result(instruction)
+
+        if (
+            target_concentration_unit in {"ppm", "ppb"}
+            or output_stock_concentration_unit in {"ppm", "ppb"}
+        ):
+            st.info(
+                "Note: ppm/ppb conversions are approximate for dilute "
+                "aqueous-style laboratory calculations."
+            )
 
 
 def solution_prep_calculator() -> None:
@@ -152,7 +407,13 @@ def percent_vv_calculator() -> None:
 
     with st.form("percent_vv_form"):
         solute_name = st.text_input("Solute name", "ethanol")
-        percent = st.number_input("Percent v/v", min_value=0.000000001, max_value=100.0, value=70.0, format="%.10g")
+        percent = st.number_input(
+            "Percent v/v",
+            min_value=0.000000001,
+            max_value=100.0,
+            value=70.0,
+            format="%.10g",
+        )
         final_volume = positive_number("Final volume", 100.0)
         final_volume_unit = st.selectbox("Final volume unit", VOLUME_UNITS, index=2)
         output_volume_unit = st.selectbox("Output solute volume unit", VOLUME_UNITS, index=2)
@@ -175,7 +436,13 @@ def percent_ww_calculator() -> None:
 
     with st.form("percent_ww_form"):
         compound_name = st.text_input("Compound name", "NaCl")
-        percent = st.number_input("Percent w/w", min_value=0.000000001, max_value=100.0, value=5.0, format="%.10g")
+        percent = st.number_input(
+            "Percent w/w",
+            min_value=0.000000001,
+            max_value=100.0,
+            value=5.0,
+            format="%.10g",
+        )
         final_mass = positive_number("Final mixture mass", 100.0)
         final_mass_unit = st.selectbox("Final mixture mass unit", MASS_UNITS, index=3)
         output_mass_unit = st.selectbox("Output solute mass unit", MASS_UNITS, index=3)
@@ -220,7 +487,11 @@ def serial_dilution_calculator() -> None:
     with st.form("serial_dilution_form"):
         initial_concentration = positive_number("Initial concentration", 1000.0)
         final_concentration = positive_number("Requested final concentration", 1.0)
-        dilution_factor = positive_number("Dilution factor per step", 10.0, min_value=1.000000001)
+        dilution_factor = positive_number(
+            "Dilution factor per step",
+            10.0,
+            min_value=1.000000001,
+        )
         concentration_unit = st.selectbox("Concentration unit", DILUTION_CONCENTRATION_UNITS, index=5)
         submitted = st.form_submit_button("Plan serial dilution")
 
@@ -267,6 +538,9 @@ st.info(DISCLAIMER)
 
 calculator_options = [
     "Dilution calculator",
+    "Prepare analytical standard from solid",
+    "Dilute analytical standard",
+    "Practical analytical standard plan",
     "Prepare solution from solid",
     "Molarity from weighed solid",
     "Percent w/v solution",
@@ -286,6 +560,12 @@ calculator = st.radio(
 
 if calculator == "Dilution calculator":
     dilution_calculator()
+elif calculator == "Prepare analytical standard from solid":
+    analytical_standard_from_solid_calculator()
+elif calculator == "Dilute analytical standard":
+    dilute_analytical_standard_calculator()
+elif calculator == "Practical analytical standard plan":
+    practical_analytical_standard_plan_calculator()
 elif calculator == "Prepare solution from solid":
     solution_prep_calculator()
 elif calculator == "Molarity from weighed solid":
@@ -296,7 +576,7 @@ elif calculator == "Percent v/v solution":
     percent_vv_calculator()
 elif calculator == "Percent w/w mixture":
     percent_ww_calculator()
-elif calculator == "Concentration conversion":
+elif calculator == "Concentration unit conversion":
     concentration_conversion_calculator()
 elif calculator == "Serial dilution planner":
     serial_dilution_calculator()
@@ -307,9 +587,9 @@ elif calculator == "About / Privacy":
 
     st.write(
         "QuickLab Calc is a practical laboratory calculator for routine "
-        "solution-preparation calculations, including dilutions, molarity, "
-        "percent solutions, concentration conversions, serial dilutions, "
-        "and scaling."
+        "solution-preparation calculations, including dilutions, analytical "
+        "standard preparation, molarity, percent solutions, concentration "
+        "conversions, serial dilutions, and scaling."
     )
 
     st.subheader("Important disclaimer")
@@ -361,6 +641,9 @@ with st.expander("Example calculations"):
     st.markdown(
         """
 - **Dilution:** Prepare 100 mL of 50 ppm from a 1000 ppm stock.
+- **Analytical standard from solid:** Prepare 200 mL of 2.5542 µg/mL standard with purity correction.
+- **Dilute analytical standard:** Prepare 10 mL of 50 µg/mL working standard from a 1 mg/mL stock.
+- **Practical analytical standard plan:** Prepare a 100 µg/mL stock by weighing a practical mass, then dilute to the target working standard.
 - **Solution from solid:** Prepare 100 mL of 50 mM NaCl using MW 58.44 g/mol.
 - **Percent w/v:** Prepare 100 mL of 1% w/v NaCl.
 - **Concentration conversion:** Convert 1 mg/mL to mg/L.
